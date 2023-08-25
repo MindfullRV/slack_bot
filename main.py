@@ -1,23 +1,18 @@
 # modules
-import os
-import slack
-from pathlib import Path
-from dotenv import load_dotenv
-from flask import Flask
-from slackeventsapi import SlackEventAdapter
+import packages as pack
 
 # setting the environment variable path using dotenv
-environment_variable_path = Path(".") / ".env"
-load_dotenv(dotenv_path=environment_variable_path)
+environment_variable_path = pack.Path(".") / ".env"
+pack.load_dotenv(dotenv_path=environment_variable_path)
 
 # flask configuration with slack api
-app = Flask(__name__)
-slack_event_adapter = SlackEventAdapter(
-    os.environ["SIGNING_SECRET"], "/slack/events", app
+app = pack.Flask(__name__)
+slack_event_adapter = pack.SlackEventAdapter(
+    pack.os.environ["SIGNING_SECRET"], "/slack/events", app
 )
 
 # connect slack with python code
-client = slack.WebClient(token=os.environ["SLACK_TOKEN"])
+client = pack.slack.WebClient(token=pack.os.environ["SLACK_TOKEN"])
 BOT_ID = client.api_call("auth.test")["user_id"]  # get bot id
 
 

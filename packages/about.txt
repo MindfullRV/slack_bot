@@ -1,0 +1,7 @@
+=================PACKAGES=================
+
+This folder contains all imported packages and module
+not from local machine (it's from pip)
+(DON'T DELETE!) @IMPORTANT
+
+=================PACKAGES=================
