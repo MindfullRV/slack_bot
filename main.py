@@ -15,19 +15,22 @@ slack_event_adapter = pack.SlackEventAdapter(
 client = pack.slack.WebClient(token=pack.os.environ["SLACK_TOKEN"])
 BOT_ID = client.api_call("auth.test")["user_id"]  # get bot id
 
-
-# functions for slack events
-@slack_event_adapter.on("message")
-def message(payload):
-    event = payload.get("event", {})
-    channel_id = event.get("channel")  # get channel id the bot are in
-    user_id = event.get("user")  # get user id the user that sent prompt
-    text = event.get("text")  # just text
-
-    # send a mirror message to user
-    if BOT_ID != user_id:  # to prevent messages from looping
-        client.chat_postMessage(channel=channel_id, text=text)
+# empty dictionary
+dict_msg_count = {}
 
 
+# slash command (/)
+@app.route("/message-count", methods=["POST"])  # /message-count slash command
+def message_count():
+    data = pack.request.form
+    user_id = data.get("user_id")
+    channel_id = data.get("channel_id")
+
+    message_count = dict_msg_count.get(user_id, 0)
+    client.chat_postMessage(channel=channel_id, text=f"Messages: {message_count}")
+    return pack.Response(), 200
+
+
+# if this specific file is run, then debug=True
 if __name__ == "__main__":
     app.run(debug=True)
