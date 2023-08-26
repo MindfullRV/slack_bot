@@ -1,3 +1,3 @@
 # My first bot
-
-#### Still not done yet....
+----------
+#### This is a bot made with Slack API.
