@@ -84,7 +84,7 @@ def send_welcome_msg(channel, user):
     welcome_msg[channel][user] = welcome
 
 
-# functions for slack events
+# route for slack events
 @slack_event_adapter.on("message")
 def message(payload):
     event = payload.get("event", {})
@@ -100,6 +100,24 @@ def message(payload):
 
         if text.lower() == "start":
             send_welcome_msg(f"@{user_id}", user_id)
+
+
+# route for slack reactions
+@slack_event_adapter.on("reaction_added")
+def reaction(payload):
+    event = payload.get("event", {})
+    channel_id = event.get("item", {}).get("channel")
+    user_id = event.get("user")
+
+    if f"@{user_id}" not in welcome_msg:
+        return
+
+    welcome = welcome_msg[f"@{user_id}"][user_id]
+    welcome.completed = True
+    welcome.channel = channel_id
+    message = welcome.get_message()
+    updated_message = client.chat_update(**message)
+    welcome.timestamp = updated_message["ts"]
 
 
 # slash command (/)
