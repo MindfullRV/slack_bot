@@ -1,5 +1,6 @@
 # modules
 import packages as pack
+import string
 
 # setting the environment variable path using dotenv
 environment_variable_path = pack.Path(".") / ".env"
@@ -18,6 +19,9 @@ BOT_ID = client.api_call("auth.test")["user_id"]  # get bot id
 # empty dictionary
 dict_msg_count = {}
 welcome_msg = {}
+
+# banned words dictionary
+banned_words = ["bad", "word"]
 
 
 # welcome prompt to user dm's
@@ -73,21 +77,33 @@ class WelcomeMessage:
 
 
 def send_welcome_msg(channel, user):
+    if channel not in welcome_msg:
+        welcome_msg[channel] = {}
+
+    if user in welcome_msg[channel]:
+        return
+
     welcome = WelcomeMessage(channel, user)
     message = welcome.get_message()
     response = client.chat_postMessage(**message)
     welcome.timestamp = response["ts"]
 
-    if channel not in welcome_msg:
-        welcome_msg[channel] = {}
-
     welcome_msg[channel][user] = welcome
+
+
+# functions for filtering words
+def check_banned_words(message):
+    msg = message.lower()
+    msg = msg.translate(str.maketrans("", "", string.punctuation))
+
+    return any(word in msg for word in banned_words)
 
 
 # route for slack events
 @slack_event_adapter.on("message")
 def message(payload):
     event = payload.get("event", {})
+    channel_id = event.get("channel")  # get channel id the bot are in
     user_id = event.get("user")  # get user id the user that sent prompt
     text = event.get("text")  # just text
 
@@ -100,6 +116,11 @@ def message(payload):
 
         if text.lower() == "start":
             send_welcome_msg(f"@{user_id}", user_id)
+        elif check_banned_words(text):
+            ts = event.get("ts")
+            client.chat_postMessage(  # send warning to user if user type banned words
+                channel=channel_id, thread_ts=ts, text="THAT IS A BAD WORD!"
+            )
 
 
 # route for slack reactions
